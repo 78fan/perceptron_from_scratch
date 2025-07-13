@@ -41,7 +41,7 @@ def gradient_descent(weights: np.ndarray,
                      features: np.ndarray,
                      categories: np.ndarray,
                      step: float) -> np.ndarray:
-    minibatch_indexes = np.random.randint(0, categories.size, size=5)
+    minibatch_indexes = np.random.randint(0, categories.size, size=10)
     features = features[minibatch_indexes]
     categories = categories[minibatch_indexes]
     predicted_categories = classify(weights, features)
