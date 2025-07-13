@@ -15,7 +15,6 @@ test_categories = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 noise = np.random.uniform(-1.5, 1.5, test_features.shape)
 test_features += noise
 
-test_features = np.hstack([test_features, np.ones((test_categories.size, 1))])
 
 
 def step(labels: np.ndarray) -> np.ndarray:
@@ -42,6 +41,9 @@ def gradient_descent(weights: np.ndarray,
                      features: np.ndarray,
                      categories: np.ndarray,
                      step: float) -> np.ndarray:
+    minibatch_indexes = np.random.randint(0, categories.size, size=5)
+    features = features[minibatch_indexes]
+    categories = categories[minibatch_indexes]
     predicted_categories = classify(weights, features)
     gradient = features.T @ (predicted_categories - categories)
     weights -= step * gradient
@@ -51,6 +53,10 @@ def perceptron_classification(
         features: np.ndarray,
         categories: np.ndarray,
         step: float, steps: int) -> np.ndarray:
+    features_std = features.std(axis=0)
+    features_mean = features.mean(axis=0)
+    features = (features-features_mean)/features_std
+    features = add_bias(features)
     weights = np.random.uniform(-1, 1, size=features.shape[1])
     for s in range(steps):
         gradient_descent(weights, features, categories, step)
@@ -59,7 +65,13 @@ def perceptron_classification(
             break
         if s % 1000 == 0:
             print(error)
+    weights[:-1] *= features_std.prod()/features_std
+    weights[-1] = weights[-1]*features_std.prod() - np.dot(weights[:-1],features_mean)
     return weights
+
+
+def add_bias(features: np.ndarray) -> np.ndarray:
+    return np.column_stack([features, np.ones(features.shape[0])])
 
 
 def plot_classification(weights: np.ndarray,
@@ -68,7 +80,6 @@ def plot_classification(weights: np.ndarray,
     plt.figure(figsize=(10, 6))
     x = features[:, 0]
     y = features[:, 1]
-
     plt.scatter(x[categories == 0], y[categories == 0], color='blue')
     plt.scatter(x[categories == 1], y[categories == 1], color='red')
     line = [-weights[0]/weights[1], -weights[2]/weights[1]]
@@ -86,5 +97,5 @@ def plot_classification(weights: np.ndarray,
 
 
 if __name__ == '__main__':
-    weights = perceptron_classification(test_features, test_categories, 0.001, 100000)
+    weights = perceptron_classification(test_features, test_categories, 0.0001, 100000)
     plot_classification(weights, test_features, test_categories)
